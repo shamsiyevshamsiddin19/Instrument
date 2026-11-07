@@ -1,5 +1,9 @@
 # Tezkor Tarjimon (Quick Translate) — Loyiha hujjati va Texnik tavsif
 
+## Eng so'nggi UI talabi
+
+Foydalanuvchi Gap tugmasi/kiritish paneli va so'z turkumi/lug'at shakli yozuvini rad etdi; ular olib tashlandi. RU/EN/UZ bosilganda 15 px misol ostida 12 px o'zbekcha tarjima chiqadi. Tarjima alohida bekor qilinadigan so'rov, 12 soniyalik timeout va keshga ega; lug'atga ham saqlanadi. Quyidagi eski bo'limlardagi Gap/grammatika tavsiflari tarixiydir.
+
 ## 2026-11-07: kontekst va o'rganish funksiyalari
 
 Asosiy ishchi manzil: `/home/shamsiddin/Documents/project/instrument/quick-translate/`. GNOME o'rnatilgan nusxasi `.local/share/gnome-shell/extensions/touchpad-gestures@alpha.com/` da qoladi.

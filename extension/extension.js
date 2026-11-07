@@ -41,7 +41,7 @@ import Soup from 'gi://Soup';
 import St from 'gi://St';
 import Shell from 'gi://Shell';
 import Pango from 'gi://Pango';
-import {chooseExample, englishLookup, wordInfo} from './example-utils.js';
+import {chooseExample, englishLookup} from './example-utils.js';
 import {VocabularyStore, Pronunciation} from './learning-services.js';
 
 
@@ -119,15 +119,14 @@ function fetchDictionaryExample(text, language, callback, cancellable) {
         '&q=' + encodeURIComponent(text);
     const message = Soup.Message.new('GET', url);
     soupSession.send_and_read_async(message, GLib.PRIORITY_DEFAULT, cancellable, (session, response) => {
-        let example = '', failed = false, info = '';
+        let example = '', failed = false;
         try {
             const bytes = session.send_and_read_finish(response);
             if (message.status_code !== 200) throw new Error('HTTP error');
             const data = JSON.parse(new TextDecoder().decode(bytes.get_data()));
             example = chooseExample(data);
-            info = wordInfo(data);
         } catch (_error) { failed = true; }
-        if (!cancellable.is_cancelled()) callback(example, failed, info);
+        if (!cancellable.is_cancelled()) callback(example, failed);
     });
 }
 
@@ -212,7 +211,6 @@ class QuickTranslatePopup {
         this.state = 'loading';
         this._voice = new Pronunciation();
         this._store = new VocabularyStore();
-        this._sourceMode = 'auto';
 
         this._createWidget();
         this._positionWidget();
@@ -279,26 +277,6 @@ class QuickTranslatePopup {
 
         // Center section: container for translations & original
         let bodyBox = new St.BoxLayout({ vertical: true, y_expand: true, x_expand: true });
-        this._contextBox = new St.BoxLayout({vertical: true, visible: false,
-            style: 'margin-bottom: 12px;'});
-        const contextHint = new St.Label({text: 'Aniqroq ma’no uchun butun gapni kiriting.',
-            style: 'color: #b4b4b4; font-size: 12px;'});
-        contextHint.clutter_text.line_wrap = true;
-        this._contextBox.add_child(contextHint);
-        this._contextEntry = new St.Entry({hint_text: 'So‘z qatnashgan to‘liq gap…', can_focus: true,
-            x_expand: true, style: 'background-color: #242424; color: #ececec; border-radius: 8px; padding: 8px; margin-top: 6px;'});
-        this._contextEntry.clutter_text.connect('activate', () => this._translateContext());
-        this._contextBox.add_child(this._contextEntry);
-        const contextActions = new St.BoxLayout({style: 'margin-top: 6px;'});
-        this.sourceBtn = this._textButton('Til: Auto', () => {
-            const languages = ['auto', 'uz', 'ru', 'en'];
-            this._sourceMode = languages[(languages.indexOf(this._sourceMode) + 1) % languages.length];
-            this.sourceBtn.set_label('Til: ' + this._sourceMode.toUpperCase());
-        });
-        contextActions.add_child(this.sourceBtn);
-        contextActions.add_child(this._textButton('Gapni tarjima qilish', () => this._translateContext()));
-        this._contextBox.add_child(contextActions);
-        bodyBox.add_child(this._contextBox);
 
         // Item 1 (Primary / RU)
         this.row1 = new St.BoxLayout({ vertical: false, style: 'margin-bottom: 12px;' });
@@ -351,12 +329,6 @@ class QuickTranslatePopup {
         this.row2.add_child(this.speak2);
         bodyBox.add_child(this.row2);
 
-        this.wordInfoLabel = new St.Label({
-            text: '', visible: false, x_expand: true,
-            style: 'color: #8e8e8e; font-size: 12px; margin-top: 4px;',
-        });
-        this.wordInfoLabel.clutter_text.line_wrap = true;
-        bodyBox.add_child(this.wordInfoLabel);
         this.exampleLabel = new St.Label({
             text: '', visible: false, x_expand: true,
             style: 'color: #b4b4b4; font-size: 15px; margin-top: 8px; margin-bottom: 12px;',
@@ -364,6 +336,13 @@ class QuickTranslatePopup {
         this.exampleLabel.clutter_text.line_wrap = true;
         this.exampleLabel.clutter_text.line_wrap_mode = Pango.WrapMode.WORD_CHAR;
         bodyBox.add_child(this.exampleLabel);
+        this.meaningLabel = new St.Label({
+            text: '', visible: false, x_expand: true,
+            style: 'color: #929292; font-size: 12px; margin-bottom: 10px;',
+        });
+        this.meaningLabel.clutter_text.line_wrap = true;
+        this.meaningLabel.clutter_text.line_wrap_mode = Pango.WrapMode.WORD_CHAR;
+        bodyBox.add_child(this.meaningLabel);
         this.exampleSpeak = this._iconButton('audio-volume-high-symbolic', 'Misol gapni tinglash',
             () => this._speak(this._activeExample));
         this.exampleSpeak.visible = false;
@@ -410,15 +389,6 @@ class QuickTranslatePopup {
         this.bottomRow.add_child(this.saveBtn);
         this.libraryBtn = this._textButton('Lug‘at', () => this._toggleLibrary());
         this.bottomRow.add_child(this.libraryBtn);
-        this.contextBtn = this._textButton('Gap', () => {
-            this._contextBox.visible = !this._contextBox.visible;
-            if (this._contextBox.visible) {
-                this._contextEntry.set_text(this.originalText);
-                this._contextEntry.grab_key_focus();
-            } else this.actor.grab_key_focus();
-            this._startAutoClose(8000);
-        });
-        this.bottomRow.add_child(this.contextBtn);
 
         let bSpacer = new St.Widget({ x_expand: true });
         this.bottomRow.add_child(bSpacer);
@@ -502,8 +472,8 @@ class QuickTranslatePopup {
         this._savedCurrent = false;
         this._voice?.stop();
         this._speechPlaying = false;
-        this._wordInfoCache = new Map();
-        this.wordInfoLabel.visible = false;
+        this._meaningCache = new Map();
+        this.meaningLabel.visible = false;
         this.exampleLabel.visible = false;
         this.exampleSpeak.visible = false;
         this._activeExample = null;
@@ -571,16 +541,17 @@ class QuickTranslatePopup {
         const item = this._items?.[index];
         if (this._destroyed || !item?.text || item.error) return;
         this._exampleRequest?.cancel();
+        this._meaningRequest?.cancel();
+        if (this._meaningTimer) GLib.source_remove(this._meaningTimer);
+        this._meaningTimer = 0;
+        this._meaningLoading = false;
+        if (this.meaningLabel) this.meaningLabel.visible = false;
         if (this._exampleTimer) GLib.source_remove(this._exampleTimer);
         this._exampleTimer = 0;
         const request = new Gio.Cancellable();
         this._exampleRequest = request;
         this._activeExample = null;
         if (this.exampleSpeak) this.exampleSpeak.visible = false;
-        if (this.wordInfoLabel) {
-            this.wordInfoLabel.visible = false;
-            this.wordInfoLabel.set_text('');
-        }
         this.exampleLabel.visible = true;
         this.tag1.set_label(this._items[0].tag + (index === 0 ? ' ·' : ''));
         if (this._items[1]) this.tag2.set_label(this._items[1].tag + (index === 1 ? ' ·' : ''));
@@ -593,6 +564,7 @@ class QuickTranslatePopup {
             if (cache) this._exampleCache.set(item.tag, text);
             if (cache && this._savedCurrent) this._saveWord(true);
             if (cache || this._exampleCache.has(item.tag)) {
+                this._showMeaning?.(text, item.tag);
                 this._activeExample = {tag: item.tag, text};
                 if (this.exampleSpeak) {
                     this.exampleSpeak.visible = ['RU', 'EN'].includes(item.tag);
@@ -602,8 +574,6 @@ class QuickTranslatePopup {
             this._startAutoClose(8000);
         };
         if (this._exampleCache.has(item.tag)) {
-            const cachedInfo = this._wordInfoCache?.get(item.tag);
-            this._showWordInfo?.(cachedInfo?.info || '', cachedInfo?.sourceTag || item.tag, item.tag);
             finish(this._exampleCache.get(item.tag));
             return;
         }
@@ -618,8 +588,7 @@ class QuickTranslatePopup {
         });
         const fromEnglish = () => {
             const lookup = english => {
-                fetchDictionaryExample(englishLookup(english), 'EN', (example, failed, info) => {
-                    this._showWordInfo?.(info || '', 'EN', item.tag);
+                fetchDictionaryExample(englishLookup(english), 'EN', (example, failed) => {
                     if (!example) {
                         finish(failed ? 'Internet aloqasini tekshirib, qayta urinib ko‘ring.' :
                             'Bu so‘z yoki ibora uchun misol topilmadi.');
@@ -638,54 +607,46 @@ class QuickTranslatePopup {
                 else lookup(text);
             }, request);
         };
-        fetchDictionaryExample(item.text, item.tag, (example, failed, info) => {
-            this._showWordInfo?.(info || '', item.tag, item.tag);
+        fetchDictionaryExample(item.text, item.tag, (example, failed) => {
             if (example) finish(example, true);
             else if (failed) finish('Internet aloqasini tekshirib, qayta urinib ko‘ring.');
             else fromEnglish();
         }, request);
     }
 
-    _translateContext() {
-        const text = this._contextEntry.get_text().trim();
-        if (!text || Array.from(text).length > 3000) {
-            this._status('1–3000 belgidan iborat gap kiriting.');
-            return;
-        }
-        this._cancellable?.cancel();
-        this._exampleRequest?.cancel();
-        if (this._exampleTimer) GLib.source_remove(this._exampleTimer);
-        this._exampleTimer = 0;
-        this._exampleLoading = false;
-        this._clearDeadline();
-        this._voice.stop();
-        this._speechPlaying = false;
-        this.originalText = text;
-        this.origLabel.set_text(text.length > 80 ? text.slice(0, 77) + '…' : text);
-        this._contextBox.visible = false;
-        this.actor.grab_key_focus();
-        this._ready = false;
-        this.state = 'loading';
-        this._startAutoClose(8000);
-        this.pill.set_text('TARJIMA QILINMOQDA');
-        this.trans1.set_text('…');
-        this.tag1.visible = false;
-        this.row2.visible = false;
-        this.exampleLabel.visible = false;
-        this.wordInfoLabel.visible = false;
-        this.exampleSpeak.visible = false;
-        this.saveBtn.reactive = false;
-        this.copyBtn.reactive = false;
-        this.speak1.reactive = false;
-        this.speak2.reactive = false;
-        this._status('');
+
+    _showMeaning(text, tag) {
+        if (!this.meaningLabel || this._destroyed) return;
+        this._meaningCache ??= new Map();
+        const key = tag + ':' + text;
         const request = new Gio.Cancellable();
-        if (!this.startRequest(request)) return;
-        requestMultiTranslation(text, (result, error) => {
-            if (this._destroyed || request.is_cancelled() || this._cancellable !== request) return;
-            if (error) this.setError(error);
-            else this.setResult(result);
-        }, request, this._sourceMode);
+        this._meaningRequest = request;
+        this.meaningLabel.visible = true;
+        const finish = (translation, error) => {
+            if (this._destroyed || request.is_cancelled() || this._meaningRequest !== request) return;
+            if (this._meaningTimer) GLib.source_remove(this._meaningTimer);
+            this._meaningTimer = 0;
+            this._meaningLoading = false;
+            this.meaningLabel.set_text(error ? 'O‘zbekcha tarjima olinmadi. Tilni qayta bosing.' : translation);
+            if (!error) {
+                this._meaningCache.set(key, translation);
+                if (this._savedCurrent) this._saveWord(true);
+            }
+            this._startAutoClose(8000);
+        };
+        if (tag === 'UZ') { finish(text, null); return; }
+        if (this._meaningCache.has(key)) { finish(this._meaningCache.get(key), null); return; }
+        this._meaningLoading = true;
+        this.meaningLabel.set_text('O‘zbekcha ma’nosi yuklanmoqda…');
+        this._startAutoClose(8000);
+        this._meaningTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 12000, () => {
+            this._meaningTimer = 0;
+            finish('', true);
+            request.cancel();
+            return GLib.SOURCE_REMOVE;
+        });
+        fetchOne(text, tag.toLowerCase(), 'uz',
+            (translation, _source, error) => finish(translation, error), request);
     }
 
     _textButton(label, callback) {
@@ -730,13 +691,6 @@ class QuickTranslatePopup {
         });
     }
 
-    _showWordInfo(info, sourceTag, cacheTag = sourceTag) {
-        if (this._destroyed || !this.wordInfoLabel) return;
-        const label = info ? sourceTag + ' lug‘ati: ' + info : 'So‘z turkumi lug‘atda topilmadi.';
-        this.wordInfoLabel.set_text(label);
-        this.wordInfoLabel.visible = true;
-        this._wordInfoCache?.set(cacheTag, {info, sourceTag});
-    }
 
     _saveWord(quiet = false) {
         if (!this._items?.length || this._items.some(item => !item.text || item.error)) return;
@@ -745,7 +699,7 @@ class QuickTranslatePopup {
                 original: this.originalText, src: this._resultSource,
                 items: this._items.map(item => ({tag: item.tag, text: item.text})),
                 examples: Object.fromEntries(this._exampleCache || []),
-                wordInfo: Object.fromEntries(this._wordInfoCache || []),
+                meanings: Object.fromEntries(this._meaningCache || []),
             });
             this.saveBtn.set_label('Saqlandi');
             this._savedCurrent = true;
@@ -759,7 +713,6 @@ class QuickTranslatePopup {
         this._mainScroll.visible = !opening;
         this.libraryBtn.set_label(opening ? 'Orqaga' : 'Lug‘at');
         this.saveBtn.visible = !opening;
-        this.contextBtn.visible = !opening;
         this.copyBtn.visible = !opening;
         this._status('');
         if (opening) this._renderLibrary();
@@ -803,9 +756,9 @@ class QuickTranslatePopup {
         this._libraryBody.destroy_all_children();
         this._libraryLabel(entry.original);
         const answer = this._libraryLabel(entry.items.map(item => item.tag + ': ' + item.text +
-            (entry.wordInfo?.[item.tag]?.info ? '\n' + entry.wordInfo[item.tag].sourceTag +
-                ' lug‘ati: ' + entry.wordInfo[item.tag].info : '') +
-            (entry.examples?.[item.tag] ? '\n' + entry.examples[item.tag] : '')).join('\n\n'));
+            (entry.examples?.[item.tag] ? '\n' + entry.examples[item.tag] : '') +
+            (entry.meanings?.[item.tag + ':' + entry.examples?.[item.tag]] ?
+                '\n' + entry.meanings[item.tag + ':' + entry.examples[item.tag]] : '')).join('\n\n'));
         answer.visible = false;
         const reveal = this._textButton('Tarjimasini eslang · Javob', () => {
             answer.visible = !answer.visible;
@@ -889,8 +842,8 @@ class QuickTranslatePopup {
             GLib.source_remove(this._timerId);
             this._timerId = null;
         }
-        if (this._destroyed || !this._ready || this._exampleLoading || this._speechPlaying || this.actor.hover ||
-            (this._contextBox?.visible && this._contextBox.contains(global.stage.get_key_focus()))) return;
+        if (this._destroyed || !this._ready || this._exampleLoading || this._meaningLoading ||
+            this._speechPlaying || this.actor.hover) return;
         this._timerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, ms, () => {
             this._timerId = null;
             this.destroy();
@@ -904,6 +857,11 @@ class QuickTranslatePopup {
         if (this._destroyed) return;
         this._destroyed = true;
         this.state = 'closed';
+        this._meaningRequest?.cancel();
+        if (this._meaningTimer) {
+            GLib.source_remove(this._meaningTimer);
+            this._meaningTimer = 0;
+        }
         this._voice?.stop();
         this._exampleRequest?.cancel();
         if (this._exampleTimer) {

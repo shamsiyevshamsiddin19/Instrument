@@ -15,7 +15,7 @@ Keyingi o'zgarishlar avval shu loyihada qilinadi. Tekshiruvdan keyin o'zgargan f
 
 ## So'zni gap ichida ko'rish
 
-Tarjima tayyor bo'lgach RU, EN yoki UZ til belgisini bosing. Pastda tanlangan tilda qisqa misol chiqadi. Faol til nuqta bilan belgilanadi; boshqa til bosilsa misol almashadi. Misol yuklanayotganda avtomatik yopilish to'xtaydi, lekin Esc, X va tashqariga bosish ishlaydi. Copy oldingidek asosiy tarjimalarni nusxalaydi.
+Tarjima tayyor bo'lgach RU, EN yoki UZ til belgisini bosing. Pastda tanlangan tilda 15 px qisqa misol, uning ostida 12 px o'zbekcha tarjima chiqadi. UZ misolda o'zbekcha matn qayta tarmoq so'rovisiz ko'rsatiladi. Faol til nuqta bilan belgilanadi; boshqa til bosilsa misol va uning tarjimasi almashadi. Yuklanayotganda avtomatik yopilish to'xtaydi, lekin Esc, X va tashqariga bosish ishlaydi. Copy oldingidek asosiy tarjimalarni nusxalaydi.
 
 Misollar mavjud Google lug'at xizmatidan olinadi. Tanlangan tilda misol bo'lmasa, inglizcha misol qidirilib shu tilga tarjima qilinadi. Qisqa inglizcha iborada boshlang'ich yordamchi fe'l yoki artikl olib tashlanishi mumkin. Ko'p ma'noli so'zning kerakli ma'nosi har doim aniqlanmaydi; ayrim so'z va iboralar uchun misol mavjud emas. Bunday holatda «Misol topilmadi» ko'rsatiladi. Bu AI orqali har qanday so'z uchun yangi gap yaratish xizmati emas.
 
@@ -23,9 +23,9 @@ Bir karta ichida muvaffaqiyatli misollar xotirada saqlanadi; diskka yozilmaydi. 
 
 ## O'rganish funksiyalari
 
-- **Gap:** butun gapni kiriting, manba tilini Auto / UZ / RU / EN orqali tanlang. Bunda butun gap qayta tarjima qilinadi; alohida so'z ma'nosini AI bilan ajratish yoki ko'rinmayotgan matnni avtomatik o'qish amalga oshirilmaydi.
+- **Soddalashtirilgan karta:** foydalanuvchi talabiga ko'ra Gap tugmasi, gap kiritish paneli va grammatik lug'at yozuvi olib tashlandi. Aniqroq tarjima uchun manba dasturida to'liq gapni belgilang.
 - **Talaffuz:** RU va EN yonidagi ovoz belgisi so'z/iborani o'qiydi; misol ostidagi belgi misolni o'qiydi. Qayta bosish to'xtatadi. Bir vaqtda bitta ovoz; karta yopilganda ovoz to'xtaydi. Internet va `ffplay` kerak, API kaliti kerak emas. 200 belgidan uzun matn kesilmaydi, izoh ko'rsatiladi. O'zbekcha ovoz mavjud deb ko'rsatilmaydi.
-- **So'z ma'lumoti:** til belgisi bosilganda lug'at bergan so'z turkumi va lug'at shakli ko'rsatiladi. EN lug'atidan olingan ma'lumot RU so'zining grammatikasi deb taqdim etilmaydi. Topilmagan shakl taxmin qilinmaydi.
+- **O'zbekcha ma'no:** misol ostida kichikroq shriftda uning tarjimasi chiqadi; u uchun alohida 12 soniyalik kutish chegarasi va karta ichidagi kesh mavjud.
 - **Saqlash / Lug'at:** faqat tanlangan so'zlar tarjima, ochilgan misollar va lug'at ma'lumoti bilan lokal saqlanadi. Saqlangan kartada keyin ochilgan misol ham yangilanadi. Lug'at boshida bo'sh; 20 tadan sahifalanadi. Yozuvni bosib tarjimasini eslang, keyin javobini oching. O'chirish ikki bosqichli.
 
 Saqlash manzili: `~/.local/share/quick-translate/vocabulary.json` (yoki XDG_DATA_HOME bo'lsa shu yerda). Fayl 0600 ruxsat bilan atomik almashtiriladi, oldingi nusxa zaxiralanadi. Buzilgan fayl avtomatik o'chirilmaydi yoki ustidan yozilmaydi. Limit 500 yozuv; to'lsa avval foydalanuvchi keraksizini o'chiradi. Lug'at GitHub'ga yuborilmaydi.
