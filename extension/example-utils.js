@@ -17,3 +17,12 @@ export function englishLookup(text) {
     if (value.split(/\s+/).length > 4) return value;
     return value.replace(/^(?:was|were|is|are|be|a|an|the)\s+/i, '');
 }
+
+export function wordInfo(data) {
+    const names = {noun: 'ot', verb: 'fe’l', adjective: 'sifat', adverb: 'ravish',
+        pronoun: 'olmosh', preposition: 'predlog', conjunction: 'bog‘lovchi',
+        interjection: 'undov', article: 'artikl'};
+    return (Array.isArray(data?.definitions) ? data.definitions : [])
+        .filter(group => typeof group.pos === 'string' && typeof group.base_form === 'string')
+        .slice(0, 3).map(group => (names[group.pos] || group.pos) + ' · ' + group.base_form).join('; ');
+}

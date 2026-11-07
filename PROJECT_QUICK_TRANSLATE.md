@@ -1,5 +1,17 @@
 # Tezkor Tarjimon (Quick Translate) — Loyiha hujjati va Texnik tavsif
 
+## 2026-11-07: kontekst va o'rganish funksiyalari
+
+Asosiy ishchi manzil: `/home/shamsiddin/Documents/project/instrument/quick-translate/`. GNOME o'rnatilgan nusxasi `.local/share/gnome-shell/extensions/touchpad-gestures@alpha.com/` da qoladi.
+
+- `Gap`: to'liq gapni qayta tarjima qilish, manba tili Auto/UZ/RU/EN. Bu AI orqali alohida so'z ma'nosini ajratish emas; sifat uchun butun gap qo'lda beriladi.
+- RU/EN talaffuzi va misol gap ovozi: Google TTS + ffplay, kalitsiz, internet kerak, 200 belgi va 30 soniya chegarasi. Popup yopilishi jarayonni to'xtatadi.
+- Til belgisiga bosganda lug'at manbasi bilan so'z turkumi/lug'at shakli ko'rsatiladi. Yo'q ma'lumot taxmin qilinmaydi.
+- `Saqlash` va `Lug'at`: lokal xususiy JSON, takroriy yozuvni yangilash, misollar, 20 yozuvli sahifalar, javobni yashirib takrorlash, ikki bosqichli o'chirish. 500 yozuv chegarasida avtomatik o'chirish yo'q.
+- Alohida nusxalash va kartani mahkamlash foydalanuvchi talabiga ko'ra qo'shilmagan.
+- Xizmat moduli: `extension/learning-services.js`; lug'at ma'lumoti: `extension/example-utils.js`; testlar `extension/tests/` da. Test buyruqlari README'da.
+- Holat: avtomatik regression va haqiqiy Gio saqlash testlari o'tgan; ovoz manbasi MP3 qaytarishi tekshirilgan. Ovozning karnaydan eshitilishi va yangi UI haqiqiy kompozitorda tekshirilmagan; kod Log Out/Log In dan keyin yuklanadi.
+
 Ushbu hujjat boshqa chat yoki yangi AI sessiyasida loyihani aynan to'xtagan joyidan davom ettirish uchun to'liq texnik ma'lumotlarni o'z ichiga oladi.
 
 ---
