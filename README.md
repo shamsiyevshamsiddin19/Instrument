@@ -22,7 +22,7 @@ Asosiy tarjima Gemini `gemini-3.8-flash` orqali olinadi. Kalit loyiha yoki GitHu
 {"apiKey":"YOUR_GEMINI_API_KEY"}
 ```
 
-Papka `0700`, fayl `0600` ruxsatida bo'lishi kerak. Gemini olti soniyada javob bermasa, HTTP xatosi bersa yoki uning JSON javobi to'liq/ishonchli bo'lmasa, karta avtomatik ravishda avvalgi Google lug'at kanalidan ikki tarjimani oladi. Shu sababli foydalanuvchi uchun oyna o'lchami, joylashuvi va dizayni o'zgarmaydi.
+Papka `0700`, fayl `0600` ruxsatida bo'lishi kerak. Google zaxira so'rovi fonda tayyorlanadi, ammo Gemini muvaffaqiyatli bo'lsa uning natijasi ishlatilmaydi. Gemini olti soniyada javob bermasa, HTTP xatosi bersa yoki uning JSON javobi to'liq/ishonchli bo'lmasa, tayyor zaxira natijasi darhol ishlatiladi. Shu sababli foydalanuvchi uchun oyna o'lchami, joylashuvi va dizayni o'zgarmaydi.
 
 ## So'zni gap ichida ko'rish
 
