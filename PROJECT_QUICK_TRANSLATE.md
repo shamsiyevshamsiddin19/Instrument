@@ -8,7 +8,7 @@ Foydalanuvchi Gap tugmasi/kiritish paneli va so'z turkumi/lug'at shakli yozuvini
 
 - `requestMultiTranslation` avval Gemini `gemini-3.8-flash` endpointiga qat'iy JSON sxemasi bilan so'rov yuboradi. U faqat `UZ → RU+EN`, `EN → UZ+RU`, `RU → UZ+EN` javobini qabul qiladi; noto'g'ri, bo'sh yoki yarim javob kartaga chiqarilmaydi.
 - API kaliti kodga, git tarixiga yoki GitHub'ga yozilmaydi. Mahalliy maxfiy konfiguratsiya: `~/.config/quick-translate/gemini.json` (`0700` papka, `0600` fayl). Unda faqat `{"apiKey":"..."}` bo'ladi.
-- Gemini uchun 6 soniyalik alohida timeout bor. HTTP xatosi, timeout yoki JSON validatsiyasi xatosida tizim hech qanday qo'shimcha oyna chiqarmasdan avvalgi `dict-chrome-ex` Google kanaliga avtomatik o'tadi. Umumiy popup deadline ham saqlanadi.
+- Gemini uchun 6 soniyalik alohida timeout bor. `dict-chrome-ex` Google zaxirasi fon rejimida tayyorlanadi, lekin Gemini muvaffaqiyatli bo'lsa ko'rsatilmaydi. HTTP xatosi, timeout yoki JSON validatsiyasi xatosida tayyor natija darhol ishlatiladi. Umumiy popup deadline ham saqlanadi.
 - Kartaning 480×300 o'lchami, kursor bo'yicha joylashuvi, qora dizayni va oynani yopish mantig'i o'zgarmagan.
 
 ## 2026-11-07: kontekst va o'rganish funksiyalari

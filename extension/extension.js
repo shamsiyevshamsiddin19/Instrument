@@ -188,21 +188,35 @@ function requestGeminiMultiTranslation(text, callback, cancellable, source = 'au
 
 function requestMultiTranslation(text, callback, cancellable, source = 'auto') {
     let completed = false;
+    let geminiPending = true;
+    let geminiError = null;
+    let preparedFallback = null;
+    let fallbackError = null;
     const finish = (result, error) => {
         if (completed || cancellable?.is_cancelled()) return;
         completed = true;
         callback(result, error);
     };
 
-    requestGeminiMultiTranslation(text, (result, geminiError) => {
+    // Prepare the legacy result concurrently, but do not show it while Gemini
+    // is still healthy. This removes a second network wait after a 503/timeout.
+    requestGoogleMultiTranslation(text, (result, error) => {
+        preparedFallback = result;
+        fallbackError = error || null;
+        if (!geminiPending)
+            finish(preparedFallback, fallbackError || geminiError || 'Tarjima olinmadi.');
+    }, cancellable, source);
+
+    requestGeminiMultiTranslation(text, (result, error) => {
+        geminiPending = false;
         if (result) {
             finish(result, null);
             return;
         }
-        if (cancellable?.is_cancelled()) return;
-        requestGoogleMultiTranslation(text, (fallback, fallbackError) => {
-            finish(fallback, fallbackError || geminiError || 'Tarjima olinmadi.');
-        }, cancellable, source);
+        geminiError = error || 'Gemini javob bermadi.';
+        // If Google is still in flight, its callback completes the fallback.
+        if (preparedFallback !== null || fallbackError)
+            finish(preparedFallback, fallbackError || geminiError);
     }, cancellable, source);
 }
 
