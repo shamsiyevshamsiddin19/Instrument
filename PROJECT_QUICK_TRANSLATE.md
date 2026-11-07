@@ -7,7 +7,7 @@ Foydalanuvchi Gap tugmasi/kiritish paneli va so'z turkumi/lug'at shakli yozuvini
 ## 2026-11-07: Gemini asosiy tarjima dvigateli
 
 - `requestMultiTranslation` avval Gemini `gemini-3.8-flash` endpointiga qat'iy JSON sxemasi bilan so'rov yuboradi. U faqat `UZ → RU+EN`, `EN → UZ+RU`, `RU → UZ+EN` javobini qabul qiladi; noto'g'ri, bo'sh yoki yarim javob kartaga chiqarilmaydi.
-- API kaliti kodga, git tarixiga yoki GitHub'ga yozilmaydi. Mahalliy maxfiy konfiguratsiya: `~/.config/quick-translate/gemini.json` (`0700` papka, `0600` fayl). Unda faqat `{"apiKey":"..."}` bo'ladi.
+- API kaliti kodga, git tarixiga yoki GitHub'ga yozilmaydi. Mahalliy maxfiy konfiguratsiya: `~/.config/quick-translate/providers.json` (`0700` papka, `0600` fayl). Eski `gemini.json` ham backward-compatible o'qiladi.
 - Gemini uchun 6 soniyalik alohida timeout bor. `dict-chrome-ex` Google zaxirasi fon rejimida tayyorlanadi, lekin Gemini muvaffaqiyatli bo'lsa ko'rsatilmaydi. HTTP xatosi, timeout yoki JSON validatsiyasi xatosida tayyor natija darhol ishlatiladi. Umumiy popup deadline ham saqlanadi.
 - Kartaning 480×300 o'lchami, kursor bo'yicha joylashuvi, qora dizayni va oynani yopish mantig'i o'zgarmagan.
 
@@ -17,6 +17,12 @@ Foydalanuvchi Gap tugmasi/kiritish paneli va so'z turkumi/lug'at shakli yozuvini
 - Claude Messages API `x-api-key` va `anthropic-version` headerlari bilan ishlatiladi; uning matn javobi Gemini bilan bir xil qat'iy ikki tarjimali JSON validatsiyasidan o'tadi.
 - Claude ayrim hollarda ma'no jihatdan teng bo'lgan `source_language` hamda til-kalitli JSON qaytarishi mumkin. Adapter buni faqat kutilgan manba/maqsad tillari va to'liq matnlar mavjud bo'lganda normalizatsiya qiladi; noma'lum yoki yarim obyekt fallbackga o'tadi.
 - Claude va Gemini bir vaqtda chaqirilmaydi, shuning uchun bitta karta uchun ikkita pullik AI so'rovi hisoblanmaydi. Tanlangan AI ishlamasa fonda tayyorlangan bepul Google fallback natijasi ishlatiladi.
+
+## 2026-11-07: provider holat mashinasi
+
+- Provider boshqaruvi `translation-orchestrator.js` moduliga ajratildi. `primary` va `fallback` uchun `settled/result/error` holatlari alohida saqlanadi; `null` qiymatning vaqtinchalik holat yoki yakuniy xato ekanini taxmin qilish yo'q.
+- Primary/fallback javoblarining barcha tartiblari, ikki kanal xatosi, takroriy callback va bekor qilish avtomatik test qilinadi. UI aynan bir marta yangilanadi.
+- Providerga xos texnik kodlar faqat GNOME jurnaliga maxfiy ma'lumotsiz yoziladi. UI ikkala kanal ham ishlamagandagina umumiy, aniq xabar ko'rsatadi.
 
 ## 2026-11-07: kontekst va o'rganish funksiyalari
 

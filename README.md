@@ -18,13 +18,15 @@ Keyingi o'zgarishlar avval shu loyihada qilinadi. Tekshiruvdan keyin o'zgargan f
 Claude kaliti berilganida asosiy tarjima Claude Sonnet orqali olinadi; Claude kaliti bo'lmasa Gemini `gemini-3.8-flash` ishlatiladi. Kalitlar loyiha yoki GitHub'ga kiritilmaydi; faqat ushbu kompyuterda quyidagi faylda saqlanadi:
 
 ```json
-~/.config/quick-translate/gemini.json
+~/.config/quick-translate/providers.json
 {"apiKey":"YOUR_GEMINI_API_KEY","claudeApiKey":"YOUR_CLAUDE_API_KEY"}
 ```
 
 Papka `0700`, fayl `0600` ruxsatida bo'lishi kerak. Google zaxira so'rovi fonda tayyorlanadi, ammo tanlangan AI muvaffaqiyatli bo'lsa uning natijasi ishlatilmaydi. Claude sakkiz soniyada, Gemini olti soniyada javob bermasa, HTTP xatosi bersa yoki JSON javobi to'liq/ishonchli bo'lmasa, tayyor zaxira natijasi darhol ishlatiladi. Claude va Gemini bir vaqtda yuborilmaydi — pullik AI so'rovlari ikki marta hisoblanmaydi. Shu sababli foydalanuvchi uchun oyna o'lchami, joylashuvi va dizayni o'zgarmaydi.
 
 Claude odatda `src/items/tag/text` formatini qaytaradi. Ayrim model versiyasi mos ma'nodagi `source_language`, `UZ`, `RU`, `EN` maydonlarini qaytarsa, adapter ularni faqat kutilgan ikki til va bo'sh bo'lmagan matnlar mavjud bo'lgandagina xavfsiz standart formatga o'tkazadi. Boshqa har qanday javob rad etilib fallback ishlaydi.
+
+Providerlar orasidagi tanlov `translation-orchestrator.js` dagi aniq holat mashinasi bilan boshqariladi. Primary va fallback qaysi tartibda tugashidan qat'i nazar UI faqat bir marta yangilanadi; bekor qilingan so'rov jim tugaydi; ikkala kanal ishlamasa provider nomini oshkor qilmaydigan yagona tushunarli xabar chiqadi. Eski `gemini.json` vaqtincha backward-compatible o'qiladi, yangi standart `providers.json`.
 
 ## So'zni gap ichida ko'rish
 
@@ -52,6 +54,10 @@ Loyiha papkasidan:
 ```sh
 # JavaScript sintaksisini tekshirish.
 node --check extension/extension.js
+# Primary/fallback tartibi, ikki kanal xatosi, cancellation va bir martalik natija.
+node extension/tests/translation-orchestrator.cjs
+# AI JSON kontrakti va xavfsiz normalizatsiya.
+node extension/tests/gemini-utils.cjs
 # GNOME 46 manbasiga tayangan popup regressiya testi.
 node extension/tests/popup-lifecycle.cjs
 # Misol gaplar, til almashtirish, kesh va kutish chegarasi.
