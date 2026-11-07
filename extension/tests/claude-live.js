@@ -5,7 +5,7 @@ import Gio from 'gi://Gio';
 import Soup from 'gi://Soup';
 import {buildTranslationPrompt, parseClaudeTranslation} from '../gemini-utils.js';
 
-const configPath = GLib.build_filenamev([GLib.get_user_config_dir(), 'quick-translate', 'gemini.json']);
+const configPath = GLib.build_filenamev([GLib.get_user_config_dir(), 'quick-translate', 'providers.json']);
 const [ok, bytes] = Gio.File.new_for_path(configPath).load_contents(null);
 if (!ok) throw new Error('Private translation configuration is missing.');
 const {claudeApiKey} = JSON.parse(new TextDecoder().decode(bytes));

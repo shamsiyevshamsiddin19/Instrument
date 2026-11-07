@@ -5,6 +5,40 @@ export function targetsFor(source) {
         source === 'EN' ? ['UZ', 'RU'] : ['UZ', 'EN'];
 }
 
+export function extractFirstJsonObject(text) {
+    if (typeof text !== 'string') return '';
+    let start = -1;
+    let depth = 0;
+    let quoted = false;
+    let escaped = false;
+    for (let index = 0; index < text.length; index++) {
+        const char = text[index];
+        if (start < 0) {
+            if (char === '{') {
+                start = index;
+                depth = 1;
+            }
+            continue;
+        }
+        if (escaped) {
+            escaped = false;
+            continue;
+        }
+        if (char === '\\' && quoted) {
+            escaped = true;
+            continue;
+        }
+        if (char === '"') {
+            quoted = !quoted;
+            continue;
+        }
+        if (quoted) continue;
+        if (char === '{') depth++;
+        if (char === '}' && --depth === 0) return text.slice(start, index + 1);
+    }
+    return '';
+}
+
 export function buildTranslationPrompt(text, requestedSource = 'auto') {
     const hint = requestedSource === 'auto' ?
         'Detect the source language yourself.' :
@@ -20,22 +54,22 @@ export function buildTranslationPrompt(text, requestedSource = 'auto') {
 
 export function parseGeminiTranslation(candidateText, requestedSource = 'auto') {
     if (typeof candidateText !== 'string' || !candidateText.trim())
-        throw new Error('Gemini bo‘sh javob qaytardi.');
+        throw new Error('AI bo‘sh javob qaytardi.');
 
     let payload;
     try {
         payload = JSON.parse(candidateText);
     } catch (_error) {
-        throw new Error('Gemini JSON javobi noto‘g‘ri.');
+        throw new Error('AI JSON javobi noto‘g‘ri.');
     }
 
     let source = typeof payload.src === 'string' ? payload.src.trim().toUpperCase() : '';
     if (requestedSource !== 'auto') source = requestedSource.toUpperCase();
     if (!['UZ', 'RU', 'EN'].includes(source))
-        throw new Error('Gemini manba tilini aniqlay olmadi.');
+        throw new Error('AI manba tilini aniqlay olmadi.');
 
     if (!Array.isArray(payload.items))
-        throw new Error('Gemini tarjimalari topilmadi.');
+        throw new Error('AI tarjimalari topilmadi.');
 
     const wanted = targetsFor(source);
     const byTag = new Map();
@@ -46,7 +80,7 @@ export function parseGeminiTranslation(candidateText, requestedSource = 'auto') 
     }
 
     if (!wanted.every(tag => byTag.has(tag)))
-        throw new Error('Gemini to‘liq ikki tarjima qaytarmadi.');
+        throw new Error('AI to‘liq ikki tarjima qaytarmadi.');
 
     return {
         src: source,
@@ -60,8 +94,7 @@ export function parseClaudeTranslation(candidateText, requestedSource = 'auto') 
     } catch (initialError) {
         let raw;
         try {
-            const match = typeof candidateText === 'string' && candidateText.match(/\{[\s\S]*\}/);
-            raw = JSON.parse(match ? match[0] : candidateText);
+            raw = JSON.parse(extractFirstJsonObject(candidateText));
         } catch (_error) {
             throw initialError;
         }

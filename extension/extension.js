@@ -44,6 +44,7 @@ import Pango from 'gi://Pango';
 import {chooseExample, englishLookup} from './example-utils.js';
 import {VocabularyStore, Pronunciation} from './learning-services.js';
 import {buildTranslationPrompt, parseClaudeTranslation, parseGeminiTranslation} from './gemini-utils.js';
+import {TranslationOrchestrator} from './translation-orchestrator.js';
 
 
 // ── Swipe detection threshold (accumulated px) ────────────────────────────────
@@ -80,18 +81,21 @@ const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models
 const CLAUDE_MODEL = 'claude-sonnet-5-5';
 const CLAUDE_ENDPOINT = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_API_VERSION = '2023-06-01';
-const GEMINI_CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'quick-translate', 'gemini.json']);
+const PROVIDER_CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'quick-translate', 'providers.json']);
+const LEGACY_CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'quick-translate', 'gemini.json']);
 
 function loadPrivateTranslationConfig() {
     // Keys are deliberately outside the extension and repository. Never log them.
-    try {
-        const file = Gio.File.new_for_path(GEMINI_CONFIG_PATH);
-        const [ok, bytes] = file.load_contents(null);
-        if (!ok) return {};
-        return JSON.parse(new TextDecoder().decode(bytes));
-    } catch (_error) {
-        return {};
+    for (const path of [PROVIDER_CONFIG_PATH, LEGACY_CONFIG_PATH]) {
+        try {
+            const file = Gio.File.new_for_path(path);
+            const [ok, bytes] = file.load_contents(null);
+            if (ok) return JSON.parse(new TextDecoder().decode(bytes));
+        } catch (_error) {
+            // Try the backward-compatible path before treating config as absent.
+        }
     }
+    return {};
 }
 
 function loadGeminiApiKey() {
@@ -191,9 +195,11 @@ function requestGeminiMultiTranslation(text, callback, cancellable, source = 'au
             const parts = body?.candidates?.[0]?.content?.parts;
             const candidateText = Array.isArray(parts) ? parts.find(part => typeof part?.text === 'string')?.text : '';
             result = parseGeminiTranslation(candidateText, source);
-        } catch (_error) {
+        } catch (failure) {
             // This error intentionally stays internal; Google is the automatic fallback.
-            error = 'Gemini javob bermadi.';
+            const code = message.status_code ? `HTTP_${message.status_code}` : 'NETWORK_OR_PARSE';
+            console.warn(`[QuickTranslate] Gemini failed: ${code}`);
+            error = code;
         }
         if (!cancellable?.is_cancelled()) callback(result, error);
     });
@@ -227,52 +233,24 @@ function requestClaudeMultiTranslation(text, callback, cancellable, source = 'au
             const candidateText = Array.isArray(body?.content) ?
                 body.content.find(part => part?.type === 'text' && typeof part.text === 'string')?.text : '';
             result = parseClaudeTranslation(candidateText, source);
-        } catch (_error) {
-            error = 'Claude javob bermadi.';
+        } catch (failure) {
+            const code = message.status_code ? `HTTP_${message.status_code}` : 'NETWORK_OR_PARSE';
+            console.warn(`[QuickTranslate] Claude failed: ${code}`);
+            error = code;
         }
         if (!cancellable?.is_cancelled()) callback(result, error);
     });
-}
-
-function requestWithPreparedGoogle(primaryRequest, text, callback, cancellable, source) {
-    let completed = false;
-    let primaryPending = true;
-    let primaryError = null;
-    let preparedFallback = null;
-    let fallbackError = null;
-    const finish = (result, error) => {
-        if (completed || cancellable?.is_cancelled()) return;
-        completed = true;
-        callback(result, error);
-    };
-
-    // Prepare the free fallback concurrently, but do not show it while the
-    // selected AI engine is healthy. This removes a second network wait.
-    requestGoogleMultiTranslation(text, (result, error) => {
-        preparedFallback = result;
-        fallbackError = error || null;
-        if (!primaryPending)
-            finish(preparedFallback, fallbackError || primaryError || 'Tarjima olinmadi.');
-    }, cancellable, source);
-
-    primaryRequest(text, (result, error) => {
-        primaryPending = false;
-        if (result) {
-            finish(result, null);
-            return;
-        }
-        primaryError = error || 'Tarjima olinmadi.';
-        // If Google is still in flight, its callback completes the fallback.
-        if (preparedFallback !== null || fallbackError)
-            finish(preparedFallback, fallbackError || primaryError);
-    }, cancellable, source);
 }
 
 function requestMultiTranslation(text, callback, cancellable, source = 'auto') {
     // Claude is preferred when the user has configured it. We deliberately do
     // not issue Gemini and Claude requests together: both are paid APIs.
     const primary = loadClaudeApiKey() ? requestClaudeMultiTranslation : requestGeminiMultiTranslation;
-    requestWithPreparedGoogle(primary, text, callback, cancellable, source);
+    const coordinator = new TranslationOrchestrator(callback, () => cancellable?.is_cancelled() ?? false);
+    coordinator.start(
+        done => primary(text, done, cancellable, source),
+        done => requestGoogleMultiTranslation(text, done, cancellable, source)
+    );
 }
 
 function fetchDictionaryExample(text, language, callback, cancellable) {
