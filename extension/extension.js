@@ -43,6 +43,7 @@ import Shell from 'gi://Shell';
 import Pango from 'gi://Pango';
 import {chooseExample, englishLookup} from './example-utils.js';
 import {VocabularyStore, Pronunciation} from './learning-services.js';
+import {buildTranslationPrompt, parseGeminiTranslation} from './gemini-utils.js';
 
 
 // ── Swipe detection threshold (accumulated px) ────────────────────────────────
@@ -70,6 +71,25 @@ const MAX_V = 7, MAX_L = 5, MAX_R = 5, MAX_T = 5;
 
 /* ── Quick Translate Helpers (OpenAI Aesthetic at Pointer) ─────────────────── */
 const soupSession = new Soup.Session({timeout: 12});
+// Gemini gets a short, bounded attempt so the established Google path still
+// completes inside the popup's 20 second overall deadline when needed.
+const geminiSession = new Soup.Session({timeout: 6});
+const GEMINI_MODEL = 'gemini-3.8-flash';
+const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GEMINI_CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'quick-translate', 'gemini.json']);
+
+function loadGeminiApiKey() {
+    // The key is deliberately outside the extension and repository. Never log it.
+    try {
+        const file = Gio.File.new_for_path(GEMINI_CONFIG_PATH);
+        const [ok, bytes] = file.load_contents(null);
+        if (!ok) return '';
+        const config = JSON.parse(new TextDecoder().decode(bytes));
+        return typeof config.apiKey === 'string' ? config.apiKey.trim() : '';
+    } catch (_error) {
+        return '';
+    }
+}
 
 function fetchOne(text, src, tgt, callback, cancellable) {
     // Har bir so'rov bekor qilinadi; HTTP va javob tuzilishi tekshiriladi.
@@ -93,7 +113,7 @@ function fetchOne(text, src, tgt, callback, cancellable) {
     });
 }
 
-function requestMultiTranslation(text, callback, cancellable, source = 'auto') {
+function requestGoogleMultiTranslation(text, callback, cancellable, source = 'auto') {
     fetchOne(text, source, 'uz', (first, src, error) => {
         if (error) { callback(null, error); return; }
         if (source !== 'auto') src = source.toUpperCase();
@@ -111,6 +131,79 @@ function requestMultiTranslation(text, callback, cancellable, source = 'auto') {
                 (value, _source, failure) => complete(index, value, failure), cancellable);
         });
     }, cancellable);
+}
+
+function requestGeminiMultiTranslation(text, callback, cancellable, source = 'auto') {
+    const apiKey = loadGeminiApiKey();
+    if (!apiKey) {
+        callback(null, 'Gemini kaliti sozlanmagan.');
+        return;
+    }
+
+    const requestBody = JSON.stringify({
+        contents: [{role: 'user', parts: [{text: buildTranslationPrompt(text, source)}]}],
+        generationConfig: {
+            temperature: 0,
+            maxOutputTokens: 1024,
+            responseMimeType: 'application/json',
+            responseSchema: {
+                type: 'OBJECT',
+                properties: {
+                    src: {type: 'STRING'},
+                    items: {
+                        type: 'ARRAY',
+                        items: {
+                            type: 'OBJECT',
+                            properties: {tag: {type: 'STRING'}, text: {type: 'STRING'}},
+                            required: ['tag', 'text'],
+                        },
+                    },
+                },
+                required: ['src', 'items'],
+            },
+        },
+    });
+    const message = Soup.Message.new('POST', GEMINI_ENDPOINT);
+    message.request_headers.replace('x-goog-api-key', apiKey);
+    message.set_request_body_from_bytes('application/json', new GLib.Bytes(requestBody));
+
+    geminiSession.send_and_read_async(message, GLib.PRIORITY_DEFAULT, cancellable, (session, response) => {
+        let result = null;
+        let error = null;
+        try {
+            const bytes = session.send_and_read_finish(response);
+            if (message.status_code !== 200)
+                throw new Error(`Gemini HTTP ${message.status_code}`);
+            const body = JSON.parse(new TextDecoder().decode(bytes.get_data()));
+            const parts = body?.candidates?.[0]?.content?.parts;
+            const candidateText = Array.isArray(parts) ? parts.find(part => typeof part?.text === 'string')?.text : '';
+            result = parseGeminiTranslation(candidateText, source);
+        } catch (_error) {
+            // This error intentionally stays internal; Google is the automatic fallback.
+            error = 'Gemini javob bermadi.';
+        }
+        if (!cancellable?.is_cancelled()) callback(result, error);
+    });
+}
+
+function requestMultiTranslation(text, callback, cancellable, source = 'auto') {
+    let completed = false;
+    const finish = (result, error) => {
+        if (completed || cancellable?.is_cancelled()) return;
+        completed = true;
+        callback(result, error);
+    };
+
+    requestGeminiMultiTranslation(text, (result, geminiError) => {
+        if (result) {
+            finish(result, null);
+            return;
+        }
+        if (cancellable?.is_cancelled()) return;
+        requestGoogleMultiTranslation(text, (fallback, fallbackError) => {
+            finish(fallback, fallbackError || geminiError || 'Tarjima olinmadi.');
+        }, cancellable, source);
+    }, cancellable, source);
 }
 
 function fetchDictionaryExample(text, language, callback, cancellable) {
