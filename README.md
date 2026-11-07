@@ -13,7 +13,15 @@ GNOME ishlatadigan nusxa `/home/shamsiddin/.local/share/gnome-shell/extensions/t
 
 Keyingi o'zgarishlar avval shu loyihada qilinadi. Tekshiruvdan keyin o'zgargan fayllar o'rnatilgan kengaytmaga nusxalanadi. GNOME Wayland sessiyasida JavaScript yangilanishlari Log Out / Log In dan keyin yuklanadi. Win+L bunga yetmaydi.
 
-## Tekshirish
+## So'zni gap ichida ko'rish
+
+Tarjima tayyor bo'lgach RU, EN yoki UZ til belgisini bosing. Pastda tanlangan tilda qisqa misol chiqadi. Faol til nuqta bilan belgilanadi; boshqa til bosilsa misol almashadi. Misol yuklanayotganda avtomatik yopilish to'xtaydi, lekin Esc, X va tashqariga bosish ishlaydi. Copy oldingidek asosiy tarjimalarni nusxalaydi.
+
+Misollar mavjud Google lug'at xizmatidan olinadi. Tanlangan tilda misol bo'lmasa, inglizcha misol qidirilib shu tilga tarjima qilinadi. Qisqa inglizcha iborada boshlang'ich yordamchi fe'l yoki artikl olib tashlanishi mumkin. Ko'p ma'noli so'zning kerakli ma'nosi har doim aniqlanmaydi; ayrim so'z va iboralar uchun misol mavjud emas. Bunday holatda «Misol topilmadi» ko'rsatiladi. Bu AI orqali har qanday so'z uchun yangi gap yaratish xizmati emas.
+
+Bir karta ichida muvaffaqiyatli misollar xotirada saqlanadi; diskka yozilmaydi. Misol so'rovi 15 soniyadan oshmaydi; til almashtirilsa yoki karta yopilsa eski so'rov bekor qilinadi.
+
+## Tekshiruv buyruqlari
 
 Loyiha papkasidan:
 
@@ -22,6 +30,8 @@ Loyiha papkasidan:
 node --check extension/extension.js
 # GNOME 46 manbasiga tayangan popup regressiya testi.
 node extension/tests/popup-lifecycle.cjs
+# Misol gaplar, til almashtirish, kesh va kutish chegarasi.
+node extension/tests/examples.cjs
 ```
 
 Avtomatik test haqiqiy Wayland oynasidagi bosish/fokus sinovini almashtirmaydi. Tashqariga bosish, Esc, Copy, hover va yopilgandan keyin boshqa dasturlarni boshqarish yangi sessiyada tekshirilishi kerak.
