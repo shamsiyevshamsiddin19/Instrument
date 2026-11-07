@@ -43,7 +43,7 @@ import Shell from 'gi://Shell';
 import Pango from 'gi://Pango';
 import {chooseExample, englishLookup} from './example-utils.js';
 import {VocabularyStore, Pronunciation} from './learning-services.js';
-import {buildTranslationPrompt, parseGeminiTranslation} from './gemini-utils.js';
+import {buildTranslationPrompt, parseClaudeTranslation, parseGeminiTranslation} from './gemini-utils.js';
 
 
 // ── Swipe detection threshold (accumulated px) ────────────────────────────────
@@ -208,7 +208,7 @@ function requestClaudeMultiTranslation(text, callback, cancellable, source = 'au
     const requestBody = JSON.stringify({
         model: CLAUDE_MODEL,
         max_tokens: 1024,
-        system: 'You are a precise translation engine. Return only valid JSON, never Markdown or an explanation.',
+        system: 'You are a precise translation engine. Return only the required JSON object, never Markdown or an explanation.',
         messages: [{role: 'user', content: buildTranslationPrompt(text, source)}],
     });
     const message = Soup.Message.new('POST', CLAUDE_ENDPOINT);
@@ -226,7 +226,7 @@ function requestClaudeMultiTranslation(text, callback, cancellable, source = 'au
             const body = JSON.parse(new TextDecoder().decode(bytes.get_data()));
             const candidateText = Array.isArray(body?.content) ?
                 body.content.find(part => part?.type === 'text' && typeof part.text === 'string')?.text : '';
-            result = parseGeminiTranslation(candidateText, source);
+            result = parseClaudeTranslation(candidateText, source);
         } catch (_error) {
             error = 'Claude javob bermadi.';
         }

@@ -4,10 +4,10 @@ const vm = require('node:vm');
 
 let source = fs.readFileSync('extension/gemini-utils.js', 'utf8')
     .replace(/export function /g, 'function ');
-source += '\nmodule.exports = { targetsFor, buildTranslationPrompt, parseGeminiTranslation };';
+source += '\nmodule.exports = { targetsFor, buildTranslationPrompt, parseGeminiTranslation, parseClaudeTranslation };';
 const sandbox = {module: {exports: {}}, Map, JSON, Error};
 vm.runInNewContext(source, sandbox, {filename: 'gemini-utils.js'});
-const {targetsFor, buildTranslationPrompt, parseGeminiTranslation} = sandbox.module.exports;
+const {targetsFor, buildTranslationPrompt, parseGeminiTranslation, parseClaudeTranslation} = sandbox.module.exports;
 
 assert.deepEqual([...targetsFor('UZ')], ['RU', 'EN']);
 assert.deepEqual([...targetsFor('EN')], ['UZ', 'RU']);
@@ -26,5 +26,8 @@ assert.deepEqual(JSON.parse(JSON.stringify(parsed)), {
 assert.throws(() => parseGeminiTranslation('{bad json}'));
 assert.throws(() => parseGeminiTranslation(JSON.stringify({src: 'UZ', items: [{tag: 'RU', text: 'x'}]})));
 assert.equal(parseGeminiTranslation(JSON.stringify({src: 'RU', items: [{tag: 'UZ', text: 'salom'}, {tag: 'EN', text: 'hello'}]}), 'ru').src, 'RU');
+assert.deepEqual(JSON.parse(JSON.stringify(parseClaudeTranslation('{"source_language":"RU","UZ":"Mening","EN":"My"}'))), {
+    src: 'RU', items: [{tag: 'UZ', text: 'Mening', error: null}, {tag: 'EN', text: 'My', error: null}],
+});
 
 console.log('Gemini response helper tests passed.');
