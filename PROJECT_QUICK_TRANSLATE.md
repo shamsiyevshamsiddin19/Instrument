@@ -1,5 +1,14 @@
 # Tezkor Tarjimon (Quick Translate) — Loyiha hujjati va Texnik tavsif
 
+## 2026-11-07: noldan mustaqil arxitekturaga migratsiya
+
+- Asosiy kengaytma: `standalone/quick-translate@shamsiddin/`. U alohida UUID, schema, native `Ctrl+Alt+Z` keybinding va lifecycle'ga ega.
+- `extension/` ichidagi eski touchpad integratsiyasi migratsiya uchun saqlangan, ammo `LEGACY_QUICK_TRANSLATE_ENABLED = false`; touchpad funksiyalari tarjimondan ajratildi.
+- Qatlamlar: `extension.js` lifecycle; `selection-service.js` Wayland selection/kursor; `translation-service.js` HTTP providerlar; `translation-orchestrator.js` holat mashinasi; `popup.js` UI; `learning-services.js` lug'at/ovoz.
+- Eski global keyboard capture, `/tmp/quick_translate_trigger` monitori va GNOME media-key shortcutlar ishlatilmaydi. Bitta shortcutning bitta egasi bor.
+- Avtomatik testlar standalone enable/disable, keybinding, request cancellation, popup lifecycle, primary/fallback tartiblari, JSON normalizatsiya, misollar, lug'at va jonli Claude so'rovini qamrab oladi.
+- Eski tizim darhol o'chirib tashlanmadi: yangi kengaytma real Wayland sessiyasida tasdiqlanguncha rollback uchun manba Git tarixida va migratsiya nusxasida qoladi.
+
 ## Eng so'nggi UI talabi
 
 Foydalanuvchi Gap tugmasi/kiritish paneli va so'z turkumi/lug'at shakli yozuvini rad etdi; ular olib tashlandi. RU/EN/UZ bosilganda 15 px misol ostida 12 px o'zbekcha tarjima chiqadi. Tarjima alohida bekor qilinadigan so'rov, 12 soniyalik timeout va keshga ega; lug'atga ham saqlanadi. Quyidagi eski bo'limlardagi Gap/grammatika tavsiflari tarixiydir.

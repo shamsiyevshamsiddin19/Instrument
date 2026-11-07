@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.quick-translate"
+          path="/org/gnome/shell/extensions/quick-translate/">
+    <key name="toggle-popup" type="as">
+      <default>['&lt;Control&gt;&lt;Alt&gt;z']</default>
+      <summary>Open or close Quick Translate</summary>
+    </key>
+  </schema>
+</schemalist>

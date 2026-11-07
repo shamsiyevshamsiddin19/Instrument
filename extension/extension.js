@@ -71,6 +71,9 @@ const MAX_V = 7, MAX_L = 5, MAX_R = 5, MAX_T = 5;
 
 
 /* ── Quick Translate Helpers (OpenAI Aesthetic at Pointer) ─────────────────── */
+// Translation now lives in the standalone quick-translate@shamsiddin extension.
+// Keep legacy code dormant during migration so touchpad behavior is untouched.
+const LEGACY_QUICK_TRANSLATE_ENABLED = false;
 const soupSession = new Soup.Session({timeout: 12});
 // Gemini gets a short, bounded attempt so the established Google path still
 // completes inside the popup's 20 second overall deadline when needed.
@@ -1128,8 +1131,9 @@ export default class TouchpadGesturesExtension extends Extension {
 
         // Kursor holati faqat chaqiruv vaqtida olinadi; doimiy watcher kerak emas.
 
-        // Direct key capture for Ctrl + Alt + Z
-        this._stageKeySignalId = global.stage.connect(
+        if (LEGACY_QUICK_TRANSLATE_ENABLED) {
+            // Direct key capture for Ctrl + Alt + Z
+            this._stageKeySignalId = global.stage.connect(
             'captured-event',
             (_actor, event) => {
                 try {
@@ -1157,10 +1161,10 @@ export default class TouchpadGesturesExtension extends Extension {
                 }
                 return Clutter.EVENT_PROPAGATE;
             }
-        );
+            );
 
-        // File trigger monitor for /tmp/quick_translate_trigger (used by media-keys)
-        try {
+            // File trigger monitor for /tmp/quick_translate_trigger (used by media-keys)
+            try {
             let triggerPath = '/tmp/quick_translate_trigger';
             GLib.file_set_contents(triggerPath, '0');
             let triggerFile = Gio.File.new_for_path(triggerPath);
@@ -1172,8 +1176,9 @@ export default class TouchpadGesturesExtension extends Extension {
                     this._triggerQuickTranslate();
                 }
             });
-        } catch (e) {
-            console.error('[QuickTranslate] File monitor error:', e);
+            } catch (e) {
+                console.error('[QuickTranslate] File monitor error:', e);
+            }
         }
 
     }

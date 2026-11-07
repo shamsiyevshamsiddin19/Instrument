@@ -2,6 +2,25 @@
 
 Loyihaning ishchi manbalari shu papkada saqlanadi.
 
+## Joriy arxitektura
+
+Asosiy mahsulot endi `standalone/quick-translate@shamsiddin/` ichidagi mustaqil GNOME Shell kengaytmasidir. U touchpad kengaytmasiga runtime jihatdan bog'liq emas. `extension/` eski touchpad kengaytmasining migratsiya davridagi nusxasi bo'lib, undagi tarjimon triggeri o'chirilgan; touchpad funksiyalari saqlangan.
+
+Yangi kengaytmada `Ctrl+Alt+Z` GNOME Shell native GSettings keybinding orqali boshqariladi. Eski `/tmp/quick_translate_trigger`, global captured-event va uchta GNOME media-key shortcut yangi tizimda ishlatilmaydi.
+
+Tekshiruv:
+
+```sh
+./scripts/test-standalone.sh
+LIVE_PROVIDER_TESTS=1 ./scripts/test-standalone.sh
+```
+
+O'rnatish:
+
+```sh
+./scripts/install-standalone.sh
+```
+
 - `extension/` — tarjimon integratsiya qilingan GNOME kengaytmasi, sozlamalari, sxemalari va testlari. Kengaytma touchpad funksiyalarini ham o'z ichiga oladi; u mustaqil tarjimon kengaytmasi emas.
 - `bin/quick-translate` — Ctrl+Alt+Z orqali chaqiriladigan skript.
 - `PROJECT_QUICK_TRANSLATE.md` — texnik tavsif va o'zgarishlar tarixi.

@@ -6,3 +6,4 @@ vocabulary.json*
 history.json*
 *.mp3
 __pycache__/
+standalone/**/schemas/gschemas.compiled
