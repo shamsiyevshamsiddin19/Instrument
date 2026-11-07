@@ -42,6 +42,7 @@ const context = {
     Pronunciation: class { stop() {} },
     VocabularyStore: class { save(record) { records = [{...record,id:'1'}]; } list() { return records; } },
     requestMultiTranslation: (text, callback, request, language) => translation = {text, callback, request, language},
+    fetchOne: (text, source, target, callback, request) => translation = {text, source, target, callback, request},
 };
 vm.createContext(context);
 vm.runInContext(source.slice(source.indexOf('class QuickTranslatePopup'), source.indexOf('export default class')) +
@@ -55,21 +56,22 @@ p._saveWord();
 assert.equal(records[0].examples.EN, 'This is a test.');
 p._toggleLibrary();
 assert(p._libraryScroll.visible && !p._mainScroll.visible);
-assert(!p.copyBtn.visible && !p.contextBtn.visible);
+assert(!p.copyBtn.visible);
+assert.equal(p.contextBtn, undefined);
+assert.equal(p.wordInfoLabel, undefined);
 p._reviewSaved(records[0], 0);
 assert.equal(p._libraryBody.children[1].visible,false, 'Review answer starts hidden');
 p._libraryBody.children[2].handlers.clicked();
 assert.equal(p._libraryBody.children[1].visible,true);
 p._toggleLibrary();
-p._sourceMode='uz';
-p._contextEntry.set_text('Muammoning sababi aniqlandi.');
-p._translateContext();
-assert.equal(translation.language,'uz');
-assert.equal(translation.text,'Muammoning sababi aniqlandi.');
-assert(!p.saveBtn.reactive && !p.copyBtn.reactive);
-translation.callback({src:'UZ',items:[{tag:'RU',text:'Причина выявлена.'},{tag:'EN',text:'The cause was identified.'}]});
-assert.equal(p.state,'ready');
-assert.equal(p.originalText,translation.text);
-assert.equal(p._exampleCache.size,0);
-assert.equal(p._savedCurrent,false);
-console.log('PASS: popup construction, speech controls, save, library/reveal, full-context translation, state reset');
+p._showMeaning('This is a test.', 'EN');
+assert.equal(translation.target, 'uz');
+translation.callback('Bu sinov.', 'EN', null);
+assert.equal(p.meaningLabel.text, 'Bu sinov.');
+assert.equal(p._meaningLoading, false);
+assert.equal(records[0].meanings['EN:This is a test.'], 'Bu sinov.');
+p._showMeaning('This is a test.', 'EN');
+assert.equal(p.meaningLabel.text, 'Bu sinov.');
+p._showMeaning('Bu sinov.', 'UZ');
+assert.equal(p.meaningLabel.text, 'Bu sinov.');
+console.log('PASS: removed context/grammar controls; example meaning, cache and saved meaning; library/reveal');
