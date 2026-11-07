@@ -39,6 +39,7 @@ import { GrabHelper } from 'resource:///org/gnome/shell/ui/grabHelper.js';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import Soup from 'gi://Soup';
 import St from 'gi://St';
+import Shell from 'gi://Shell';
 import Pango from 'gi://Pango';
 
 
@@ -193,7 +194,10 @@ class QuickTranslatePopup {
         this._positionWidget();
         this._setupEvents();
         // GNOME o'zining popup mexanizmi fokus va tashqi bosishlarni boshqaradi.
-        this._grabHelper = new GrabHelper(this._overlay);
+        this._grabHelper = new GrabHelper(this._overlay, {
+            // Popup rejimi Print Screen kabi ruxsat etilgan tizim tugmalarini saqlaydi.
+            actionMode: Shell.ActionMode.POPUP,
+        });
         if (!this._grabHelper.grab({
             actor: this.actor,
             focus: this.actor,
