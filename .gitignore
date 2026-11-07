@@ -1,0 +1,8 @@
+# Shaxsiy ma'lumot va kalitlar loyiha omboriga kiritilmaydi.
+.env
+.env.*
+!.env.example
+vocabulary.json*
+history.json*
+*.mp3
+__pycache__/
