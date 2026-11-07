@@ -13,6 +13,17 @@ GNOME ishlatadigan nusxa `/home/shamsiddin/.local/share/gnome-shell/extensions/t
 
 Keyingi o'zgarishlar avval shu loyihada qilinadi. Tekshiruvdan keyin o'zgargan fayllar o'rnatilgan kengaytmaga nusxalanadi. GNOME Wayland sessiyasida JavaScript yangilanishlari Log Out / Log In dan keyin yuklanadi. Win+L bunga yetmaydi.
 
+## Gemini asosiy tarjima kanali
+
+Asosiy tarjima Gemini `gemini-3.8-flash` orqali olinadi. Kalit loyiha yoki GitHub'ga kiritilmaydi; faqat ushbu kompyuterda quyidagi faylda saqlanadi:
+
+```json
+~/.config/quick-translate/gemini.json
+{"apiKey":"YOUR_GEMINI_API_KEY"}
+```
+
+Papka `0700`, fayl `0600` ruxsatida bo'lishi kerak. Gemini olti soniyada javob bermasa, HTTP xatosi bersa yoki uning JSON javobi to'liq/ishonchli bo'lmasa, karta avtomatik ravishda avvalgi Google lug'at kanalidan ikki tarjimani oladi. Shu sababli foydalanuvchi uchun oyna o'lchami, joylashuvi va dizayni o'zgarmaydi.
+
 ## So'zni gap ichida ko'rish
 
 Tarjima tayyor bo'lgach RU, EN yoki UZ til belgisini bosing. Pastda tanlangan tilda 15 px qisqa misol, uning ostida 12 px o'zbekcha tarjima chiqadi. UZ misolda o'zbekcha matn qayta tarmoq so'rovisiz ko'rsatiladi. Faol til nuqta bilan belgilanadi; boshqa til bosilsa misol va uning tarjimasi almashadi. Yuklanayotganda avtomatik yopilish to'xtaydi, lekin Esc, X va tashqariga bosish ishlaydi. Copy oldingidek asosiy tarjimalarni nusxalaydi.
@@ -47,6 +58,8 @@ node extension/tests/examples.cjs
 node extension/tests/learning-ui.cjs
 # Haqiqiy GJS/Gio fayl ruxsatlari, dublikat, buzilgan baza va ovoz validatsiyasi.
 gjs -m extension/tests/learning-services.js
+# Faqat tarmoq va mahalliy maxfiy Gemini sozlamasi bor bo'lsa, jonli API tekshiruvi.
+gjs -m extension/tests/gemini-live.js
 ```
 
 Avtomatik test haqiqiy Wayland oynasidagi bosish/fokus sinovini almashtirmaydi. Tashqariga bosish, Esc, Copy, hover va yopilgandan keyin boshqa dasturlarni boshqarish yangi sessiyada tekshirilishi kerak.
