@@ -74,21 +74,34 @@ const soupSession = new Soup.Session({timeout: 12});
 // Gemini gets a short, bounded attempt so the established Google path still
 // completes inside the popup's 20 second overall deadline when needed.
 const geminiSession = new Soup.Session({timeout: 6});
+const claudeSession = new Soup.Session({timeout: 8});
 const GEMINI_MODEL = 'gemini-3.8-flash';
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const CLAUDE_MODEL = 'claude-sonnet-5-5';
+const CLAUDE_ENDPOINT = 'https://api.anthropic.com/v1/messages';
+const CLAUDE_API_VERSION = '2023-06-01';
 const GEMINI_CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'quick-translate', 'gemini.json']);
 
-function loadGeminiApiKey() {
-    // The key is deliberately outside the extension and repository. Never log it.
+function loadPrivateTranslationConfig() {
+    // Keys are deliberately outside the extension and repository. Never log them.
     try {
         const file = Gio.File.new_for_path(GEMINI_CONFIG_PATH);
         const [ok, bytes] = file.load_contents(null);
-        if (!ok) return '';
-        const config = JSON.parse(new TextDecoder().decode(bytes));
-        return typeof config.apiKey === 'string' ? config.apiKey.trim() : '';
+        if (!ok) return {};
+        return JSON.parse(new TextDecoder().decode(bytes));
     } catch (_error) {
-        return '';
+        return {};
     }
+}
+
+function loadGeminiApiKey() {
+    const apiKey = loadPrivateTranslationConfig().apiKey;
+    return typeof apiKey === 'string' ? apiKey.trim() : '';
+}
+
+function loadClaudeApiKey() {
+    const apiKey = loadPrivateTranslationConfig().claudeApiKey;
+    return typeof apiKey === 'string' ? apiKey.trim() : '';
 }
 
 function fetchOne(text, src, tgt, callback, cancellable) {
@@ -186,10 +199,45 @@ function requestGeminiMultiTranslation(text, callback, cancellable, source = 'au
     });
 }
 
-function requestMultiTranslation(text, callback, cancellable, source = 'auto') {
+function requestClaudeMultiTranslation(text, callback, cancellable, source = 'auto') {
+    const apiKey = loadClaudeApiKey();
+    if (!apiKey) {
+        callback(null, 'Claude kaliti sozlanmagan.');
+        return;
+    }
+    const requestBody = JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 1024,
+        system: 'You are a precise translation engine. Return only valid JSON, never Markdown or an explanation.',
+        messages: [{role: 'user', content: buildTranslationPrompt(text, source)}],
+    });
+    const message = Soup.Message.new('POST', CLAUDE_ENDPOINT);
+    message.request_headers.replace('x-api-key', apiKey);
+    message.request_headers.replace('anthropic-version', CLAUDE_API_VERSION);
+    message.set_request_body_from_bytes('application/json', new GLib.Bytes(requestBody));
+
+    claudeSession.send_and_read_async(message, GLib.PRIORITY_DEFAULT, cancellable, (session, response) => {
+        let result = null;
+        let error = null;
+        try {
+            const bytes = session.send_and_read_finish(response);
+            if (message.status_code !== 200)
+                throw new Error(`Claude HTTP ${message.status_code}`);
+            const body = JSON.parse(new TextDecoder().decode(bytes.get_data()));
+            const candidateText = Array.isArray(body?.content) ?
+                body.content.find(part => part?.type === 'text' && typeof part.text === 'string')?.text : '';
+            result = parseGeminiTranslation(candidateText, source);
+        } catch (_error) {
+            error = 'Claude javob bermadi.';
+        }
+        if (!cancellable?.is_cancelled()) callback(result, error);
+    });
+}
+
+function requestWithPreparedGoogle(primaryRequest, text, callback, cancellable, source) {
     let completed = false;
-    let geminiPending = true;
-    let geminiError = null;
+    let primaryPending = true;
+    let primaryError = null;
     let preparedFallback = null;
     let fallbackError = null;
     const finish = (result, error) => {
@@ -198,26 +246,33 @@ function requestMultiTranslation(text, callback, cancellable, source = 'auto') {
         callback(result, error);
     };
 
-    // Prepare the legacy result concurrently, but do not show it while Gemini
-    // is still healthy. This removes a second network wait after a 503/timeout.
+    // Prepare the free fallback concurrently, but do not show it while the
+    // selected AI engine is healthy. This removes a second network wait.
     requestGoogleMultiTranslation(text, (result, error) => {
         preparedFallback = result;
         fallbackError = error || null;
-        if (!geminiPending)
-            finish(preparedFallback, fallbackError || geminiError || 'Tarjima olinmadi.');
+        if (!primaryPending)
+            finish(preparedFallback, fallbackError || primaryError || 'Tarjima olinmadi.');
     }, cancellable, source);
 
-    requestGeminiMultiTranslation(text, (result, error) => {
-        geminiPending = false;
+    primaryRequest(text, (result, error) => {
+        primaryPending = false;
         if (result) {
             finish(result, null);
             return;
         }
-        geminiError = error || 'Gemini javob bermadi.';
+        primaryError = error || 'Tarjima olinmadi.';
         // If Google is still in flight, its callback completes the fallback.
         if (preparedFallback !== null || fallbackError)
-            finish(preparedFallback, fallbackError || geminiError);
+            finish(preparedFallback, fallbackError || primaryError);
     }, cancellable, source);
+}
+
+function requestMultiTranslation(text, callback, cancellable, source = 'auto') {
+    // Claude is preferred when the user has configured it. We deliberately do
+    // not issue Gemini and Claude requests together: both are paid APIs.
+    const primary = loadClaudeApiKey() ? requestClaudeMultiTranslation : requestGeminiMultiTranslation;
+    requestWithPreparedGoogle(primary, text, callback, cancellable, source);
 }
 
 function fetchDictionaryExample(text, language, callback, cancellable) {
