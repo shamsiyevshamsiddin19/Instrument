@@ -15,14 +15,14 @@ Keyingi o'zgarishlar avval shu loyihada qilinadi. Tekshiruvdan keyin o'zgargan f
 
 ## Gemini asosiy tarjima kanali
 
-Asosiy tarjima Gemini `gemini-3.8-flash` orqali olinadi. Kalit loyiha yoki GitHub'ga kiritilmaydi; faqat ushbu kompyuterda quyidagi faylda saqlanadi:
+Claude kaliti berilganida asosiy tarjima Claude Sonnet orqali olinadi; Claude kaliti bo'lmasa Gemini `gemini-3.8-flash` ishlatiladi. Kalitlar loyiha yoki GitHub'ga kiritilmaydi; faqat ushbu kompyuterda quyidagi faylda saqlanadi:
 
 ```json
 ~/.config/quick-translate/gemini.json
-{"apiKey":"YOUR_GEMINI_API_KEY"}
+{"apiKey":"YOUR_GEMINI_API_KEY","claudeApiKey":"YOUR_CLAUDE_API_KEY"}
 ```
 
-Papka `0700`, fayl `0600` ruxsatida bo'lishi kerak. Google zaxira so'rovi fonda tayyorlanadi, ammo Gemini muvaffaqiyatli bo'lsa uning natijasi ishlatilmaydi. Gemini olti soniyada javob bermasa, HTTP xatosi bersa yoki uning JSON javobi to'liq/ishonchli bo'lmasa, tayyor zaxira natijasi darhol ishlatiladi. Shu sababli foydalanuvchi uchun oyna o'lchami, joylashuvi va dizayni o'zgarmaydi.
+Papka `0700`, fayl `0600` ruxsatida bo'lishi kerak. Google zaxira so'rovi fonda tayyorlanadi, ammo tanlangan AI muvaffaqiyatli bo'lsa uning natijasi ishlatilmaydi. Claude sakkiz soniyada, Gemini olti soniyada javob bermasa, HTTP xatosi bersa yoki JSON javobi to'liq/ishonchli bo'lmasa, tayyor zaxira natijasi darhol ishlatiladi. Claude va Gemini bir vaqtda yuborilmaydi — pullik AI so'rovlari ikki marta hisoblanmaydi. Shu sababli foydalanuvchi uchun oyna o'lchami, joylashuvi va dizayni o'zgarmaydi.
 
 ## So'zni gap ichida ko'rish
 
@@ -60,6 +60,8 @@ node extension/tests/learning-ui.cjs
 gjs -m extension/tests/learning-services.js
 # Faqat tarmoq va mahalliy maxfiy Gemini sozlamasi bor bo'lsa, jonli API tekshiruvi.
 gjs -m extension/tests/gemini-live.js
+# Claude API va mahalliy maxfiy Claude kaliti bo'lsa, jonli API tekshiruvi.
+gjs -m extension/tests/claude-live.js
 ```
 
 Avtomatik test haqiqiy Wayland oynasidagi bosish/fokus sinovini almashtirmaydi. Tashqariga bosish, Esc, Copy, hover va yopilgandan keyin boshqa dasturlarni boshqarish yangi sessiyada tekshirilishi kerak.

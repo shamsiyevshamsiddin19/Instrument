@@ -11,6 +11,12 @@ Foydalanuvchi Gap tugmasi/kiritish paneli va so'z turkumi/lug'at shakli yozuvini
 - Gemini uchun 6 soniyalik alohida timeout bor. `dict-chrome-ex` Google zaxirasi fon rejimida tayyorlanadi, lekin Gemini muvaffaqiyatli bo'lsa ko'rsatilmaydi. HTTP xatosi, timeout yoki JSON validatsiyasi xatosida tayyor natija darhol ishlatiladi. Umumiy popup deadline ham saqlanadi.
 - Kartaning 480×300 o'lchami, kursor bo'yicha joylashuvi, qora dizayni va oynani yopish mantig'i o'zgarmagan.
 
+## 2026-11-07: Claude asosiy sifat kanali
+
+- Mahalliy konfiguratsiyada `claudeApiKey` bo'lsa, `claude-sonnet-5-5` asosiy tarjima modeli bo'ladi. Claude kaliti bo'lmagan qurilmada avvalgi Gemini asosiy kanal bo'lib qoladi.
+- Claude Messages API `x-api-key` va `anthropic-version` headerlari bilan ishlatiladi; uning matn javobi Gemini bilan bir xil qat'iy ikki tarjimali JSON validatsiyasidan o'tadi.
+- Claude va Gemini bir vaqtda chaqirilmaydi, shuning uchun bitta karta uchun ikkita pullik AI so'rovi hisoblanmaydi. Tanlangan AI ishlamasa fonda tayyorlangan bepul Google fallback natijasi ishlatiladi.
+
 ## 2026-11-07: kontekst va o'rganish funksiyalari
 
 Asosiy ishchi manzil: `/home/shamsiddin/Documents/project/instrument/quick-translate/`. GNOME o'rnatilgan nusxasi `.local/share/gnome-shell/extensions/touchpad-gestures@alpha.com/` da qoladi.
