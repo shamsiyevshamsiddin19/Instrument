@@ -13,7 +13,8 @@ export function buildTranslationPrompt(text, requestedSource = 'auto') {
         'Supported source languages are Uzbek (UZ), Russian (RU), and English (EN). ' +
         'If UZ, return RU and EN. If EN, return UZ and RU. If RU, return UZ and EN. ' +
         'Keep names, numbers, punctuation, and line breaks when meaningful. ' +
-        'Return only the JSON object required by the response schema.\n\n' +
+        'Return only this exact JSON shape: {"src":"UZ|RU|EN","items":[{"tag":"TARGET","text":"translation"},{"tag":"TARGET","text":"translation"}]}. ' +
+        'Use exactly the keys src, items, tag, and text; do not use source_language or language names as keys.\n\n' +
         `Selected text:\n${text}`;
 }
 
@@ -51,4 +52,27 @@ export function parseGeminiTranslation(candidateText, requestedSource = 'auto') 
         src: source,
         items: wanted.map(tag => ({tag, text: byTag.get(tag), error: null})),
     };
+}
+
+export function parseClaudeTranslation(candidateText, requestedSource = 'auto') {
+    try {
+        return parseGeminiTranslation(candidateText, requestedSource);
+    } catch (initialError) {
+        let raw;
+        try {
+            const match = typeof candidateText === 'string' && candidateText.match(/\{[\s\S]*\}/);
+            raw = JSON.parse(match ? match[0] : candidateText);
+        } catch (_error) {
+            throw initialError;
+        }
+        const source = raw?.src || raw?.source_language;
+        if (!source || !['UZ', 'RU', 'EN'].includes(String(source).toUpperCase()))
+            throw initialError;
+        const normalized = {
+            src: String(source).toUpperCase(),
+            items: Array.isArray(raw.items) ? raw.items :
+                targetsFor(String(source).toUpperCase()).map(tag => ({tag, text: raw[tag]})),
+        };
+        return parseGeminiTranslation(JSON.stringify(normalized), requestedSource);
+    }
 }

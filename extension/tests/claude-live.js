@@ -3,6 +3,7 @@
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import Soup from 'gi://Soup';
+import {buildTranslationPrompt, parseClaudeTranslation} from '../gemini-utils.js';
 
 const configPath = GLib.build_filenamev([GLib.get_user_config_dir(), 'quick-translate', 'gemini.json']);
 const [ok, bytes] = Gio.File.new_for_path(configPath).load_contents(null);
@@ -16,8 +17,8 @@ message.request_headers.replace('anthropic-version', '2023-06-01');
 message.set_request_body_from_bytes('application/json', new GLib.Bytes(JSON.stringify({
     model: 'claude-sonnet-5-5',
     max_tokens: 256,
-    system: 'You are a precise translation engine. Return only valid JSON, never Markdown or an explanation.',
-    messages: [{role: 'user', content: 'Translate "hello". Return exactly this JSON shape: {"src":"EN","items":[{"tag":"UZ","text":"..."},{"tag":"RU","text":"..."}]}'}],
+    system: 'You are a precise translation engine. Return only the required JSON object, never Markdown or an explanation.',
+    messages: [{role: 'user', content: buildTranslationPrompt('Мой', 'auto')}],
 })));
 const session = new Soup.Session({timeout: 12});
 const loop = new GLib.MainLoop(null, false);
@@ -30,9 +31,9 @@ session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null, (client, resul
             throw new Error(`Claude HTTP ${message.status_code}: ${errorBody?.error?.message || 'No diagnostic returned.'}`);
         }
         const body = JSON.parse(new TextDecoder().decode(response.get_data()));
-        const text = body?.content?.find(part => part?.type === 'text')?.text?.trim();
-        const translation = JSON.parse(text);
-        if (translation.src !== 'EN' || !Array.isArray(translation.items) || translation.items.length !== 2)
+        const text = body?.content?.find(part => part?.type === 'text')?.text;
+        const translation = parseClaudeTranslation(text, 'auto');
+        if (translation.src !== 'RU' || translation.items[0]?.tag !== 'UZ' || translation.items[1]?.tag !== 'EN')
             throw new Error('Unexpected Claude translation response.');
     } catch (error) {
         failed = error;

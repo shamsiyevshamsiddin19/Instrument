@@ -15,6 +15,7 @@ Foydalanuvchi Gap tugmasi/kiritish paneli va so'z turkumi/lug'at shakli yozuvini
 
 - Mahalliy konfiguratsiyada `claudeApiKey` bo'lsa, `claude-sonnet-5-5` asosiy tarjima modeli bo'ladi. Claude kaliti bo'lmagan qurilmada avvalgi Gemini asosiy kanal bo'lib qoladi.
 - Claude Messages API `x-api-key` va `anthropic-version` headerlari bilan ishlatiladi; uning matn javobi Gemini bilan bir xil qat'iy ikki tarjimali JSON validatsiyasidan o'tadi.
+- Claude ayrim hollarda ma'no jihatdan teng bo'lgan `source_language` hamda til-kalitli JSON qaytarishi mumkin. Adapter buni faqat kutilgan manba/maqsad tillari va to'liq matnlar mavjud bo'lganda normalizatsiya qiladi; noma'lum yoki yarim obyekt fallbackga o'tadi.
 - Claude va Gemini bir vaqtda chaqirilmaydi, shuning uchun bitta karta uchun ikkita pullik AI so'rovi hisoblanmaydi. Tanlangan AI ishlamasa fonda tayyorlangan bepul Google fallback natijasi ishlatiladi.
 
 ## 2026-11-07: kontekst va o'rganish funksiyalari

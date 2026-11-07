@@ -24,6 +24,8 @@ Claude kaliti berilganida asosiy tarjima Claude Sonnet orqali olinadi; Claude ka
 
 Papka `0700`, fayl `0600` ruxsatida bo'lishi kerak. Google zaxira so'rovi fonda tayyorlanadi, ammo tanlangan AI muvaffaqiyatli bo'lsa uning natijasi ishlatilmaydi. Claude sakkiz soniyada, Gemini olti soniyada javob bermasa, HTTP xatosi bersa yoki JSON javobi to'liq/ishonchli bo'lmasa, tayyor zaxira natijasi darhol ishlatiladi. Claude va Gemini bir vaqtda yuborilmaydi — pullik AI so'rovlari ikki marta hisoblanmaydi. Shu sababli foydalanuvchi uchun oyna o'lchami, joylashuvi va dizayni o'zgarmaydi.
 
+Claude odatda `src/items/tag/text` formatini qaytaradi. Ayrim model versiyasi mos ma'nodagi `source_language`, `UZ`, `RU`, `EN` maydonlarini qaytarsa, adapter ularni faqat kutilgan ikki til va bo'sh bo'lmagan matnlar mavjud bo'lgandagina xavfsiz standart formatga o'tkazadi. Boshqa har qanday javob rad etilib fallback ishlaydi.
+
 ## So'zni gap ichida ko'rish
 
 Tarjima tayyor bo'lgach RU, EN yoki UZ til belgisini bosing. Pastda tanlangan tilda 15 px qisqa misol, uning ostida 12 px o'zbekcha tarjima chiqadi. UZ misolda o'zbekcha matn qayta tarmoq so'rovisiz ko'rsatiladi. Faol til nuqta bilan belgilanadi; boshqa til bosilsa misol va uning tarjimasi almashadi. Yuklanayotganda avtomatik yopilish to'xtaydi, lekin Esc, X va tashqariga bosish ishlaydi. Copy oldingidek asosiy tarjimalarni nusxalaydi.
